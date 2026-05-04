@@ -34,10 +34,9 @@ int draw_symbol(int ball_x, int ball_y, char *screen_buffer, char symbol) {
   if (ball_x < 0 || ball_x >= WIDTH || ball_y < 0 || ball_y >= HEIGHT) {
     return 1;
   }
-  ball_y = -(ball_y - (HEIGHT - 1));
   int location = ball_y * (WIDTH + 1) + ball_x;
   screen_buffer[location] = symbol;
-  printf("\x1b[H"); 
+  printf("\x1b[H");
   printf("%s", screen_buffer);
   fflush(stdout);
   return 0;
@@ -60,6 +59,46 @@ double ask_for_data(char *question) {
   }
 }
 
+int *calc_y_bounds(double slope, double y_intercept) {
+  int *arr = (int*)malloc(2 * sizeof(int));
+  arr[0] = INT_MAX;
+  arr[1] = INT_MIN;
+  for (int i = 0; i < WIDTH; i++) {
+    int y = (int)(slope * i + y_intercept);
+    if (y > arr[1]) arr[1] = y;
+    if (y < arr[0]) arr[0] = y;
+  }
+  return arr;
+}
+
+int draw_graph(double slope, double y_intercept, char *screen_buffer) {
+  int *bounds = calc_y_bounds(slope, y_intercept);
+  int x_axis_location;
+  if (bounds[0] == bounds[1]) {
+    x_axis_location = (HEIGHT / 2); 
+  } else {
+    double x_axis_ratio = (0.0 - bounds[0]) / (double)(bounds[1] - bounds[0]);
+    x_axis_location = (int)((HEIGHT - 1) * x_axis_ratio);
+  }
+  if (x_axis_location < 0) x_axis_location = 0;
+  if (x_axis_location > HEIGHT - 1) x_axis_location = HEIGHT - 1;
+  for (int i = 0; i < WIDTH; i++) {
+    draw_symbol(i, x_axis_location, screen_buffer, '-');
+  }
+  for (int i = 0; i < WIDTH; i++) {
+    double y = slope * i + y_intercept;
+    int normal_y;
+    if (bounds[0] == bounds[1]) {
+      normal_y = HEIGHT / 2;
+    } else {
+      normal_y = (int)((HEIGHT - 1) * ((y - bounds[0]) / (bounds[1] - bounds[0])));
+    }
+    draw_symbol(i, normal_y, screen_buffer, 'o');
+  }
+  free(bounds);
+  return 0;
+}
+
 int main() {
   double slope = ask_for_data("slope");
   double y_intercept = ask_for_data("y_intercept");
@@ -68,8 +107,7 @@ int main() {
   CLEAR_SCREEN();
   char *screen_buffer = (char*)malloc((WIDTH + 1) * HEIGHT + 1);
   make_screen_array(screen_buffer);
-  int test_y = (int)(slope * 10 + y_intercept);
-  draw_symbol(10, test_y, screen_buffer, 'o');
+  draw_graph(slope, y_intercept, screen_buffer);
   SLEEP(5);
   CLEAR_SCREEN();
   free(screen_buffer);
