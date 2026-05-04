@@ -71,6 +71,24 @@ int *calc_y_bounds(double slope, double y_intercept) {
   return arr;
 }
 
+int draw_max_min_scale(int *bounds, char *screen_buffer) {
+  int min = bounds[0], max = bounds[1];
+  char min_string[20], max_string[20];
+  snprintf(min_string, sizeof(min_string), "%d", min);
+  snprintf(max_string, sizeof(max_string), "%d", max);
+  size_t max_len = strlen(max_string);
+  if (max_len > WIDTH) max_len = WIDTH;
+  memcpy(&screen_buffer[0], max_string, max_len);
+  int location = (HEIGHT - 1) * (WIDTH + 1);
+  size_t min_len = strlen(min_string);
+  if (min_len > WIDTH) min_len = WIDTH;
+  memcpy(&screen_buffer[location], min_string, min_len);
+  printf("\x1b[H");
+  printf("%s", screen_buffer);
+  fflush(stdout);
+  return 0;
+}
+
 int draw_graph(double slope, double y_intercept, char *screen_buffer) {
   int *bounds = calc_y_bounds(slope, y_intercept);
   int x_axis_location;
@@ -95,7 +113,8 @@ int draw_graph(double slope, double y_intercept, char *screen_buffer) {
     }
     draw_symbol(i, normal_y, screen_buffer, 'o');
   }
-  free(bounds);
+  draw_max_min_scale(bounds, screen_buffer);
+  free(bounds); 
   return 0;
 }
 
