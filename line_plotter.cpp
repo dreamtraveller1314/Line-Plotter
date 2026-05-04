@@ -35,34 +35,11 @@ int draw_symbol(int ball_x, int ball_y, char *screen_buffer, char symbol) {
     return 1;
   }
   ball_y = -(ball_y - (HEIGHT - 1));
-
   int location = ball_y * (WIDTH + 1) + ball_x;
   screen_buffer[location] = symbol;
-
   printf("\x1b[H"); 
   printf("%s", screen_buffer);
   fflush(stdout);
-
-  return 0;
-}
-
-int main() {
-  printf("\x1b[8;%d;%dt", HEIGHT + 1, WIDTH + 2);
-  printf("\x1b[?25l");
-  CLEAR_SCREEN();
-  char *screen_buffer = (char*)malloc((WIDTH + 1) * HEIGHT + 1);
-  
-  if (screen_buffer == NULL) {
-      return 1;
-  }
-
-  make_screen_array(screen_buffer);
-  draw_symbol(10, 10, screen_buffer, 'o');
-
-  SLEEP(5);
-  CLEAR_SCREEN();
-
-  free(screen_buffer);
   return 0;
 }
 
@@ -81,4 +58,20 @@ double ask_for_data(char *question) {
       printf("Please enter a valid number!\n");
     }
   }
+}
+
+int main() {
+  double slope = ask_for_data("slope");
+  double y_intercept = ask_for_data("y_intercept");
+  printf("\x1b[8;%d;%dt", HEIGHT + 1, WIDTH + 2);
+  printf("\x1b[?25l");
+  CLEAR_SCREEN();
+  char *screen_buffer = (char*)malloc((WIDTH + 1) * HEIGHT + 1);
+  make_screen_array(screen_buffer);
+  int test_y = (int)(slope * 10 + y_intercept);
+  draw_symbol(10, test_y, screen_buffer, 'o');
+  SLEEP(5);
+  CLEAR_SCREEN();
+  free(screen_buffer);
+  return 0;
 }
