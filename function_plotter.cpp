@@ -36,7 +36,23 @@ int draw_symbol(int x, int y, char *buffer, char symbol) {
     int flipped_y = (HEIGHT - 1) - y;
     int location = flipped_y * (WIDTH + 1) + x;
     buffer[location] = symbol;
-    return 0;
+    return 0; 
+}
+
+void render_screen(char *buffer) {
+    printf("\x1b[H");
+    int len = (WIDTH + 1) * HEIGHT; 
+    for (int i = 0; i < len; i++) {
+        char c = buffer[i];
+        if (c == 'o') {
+            printf("\x1b[32m%c\x1b[0m", c);
+        } else if (c == '-' || c == '|' || c == '+') {
+            printf("\x1b[31m%c\x1b[0m", c);
+        } else {
+            printf("%c", c);
+        }
+    }
+    fflush(stdout);
 }
 
 double ask_for_data(char *question) {
@@ -93,8 +109,6 @@ int draw_max_min_scale(int *bounds, char *screen_buffer) {
     size_t min_len = strlen(min_string);
     if (min_len > WIDTH) min_len = WIDTH;
     memcpy(&screen_buffer[location], min_string, min_len);
-    printf("\x1b[H");
-    printf("%s", screen_buffer);
     fflush(stdout);
     return 0;
 }
@@ -133,11 +147,19 @@ int draw_graph(double a, double b, double c, char *screen_buffer) {
         draw_symbol(i, normal_y, screen_buffer, 'o');
     }
     draw_max_min_scale(bounds, screen_buffer);
+    render_screen(screen_buffer);
     free(bounds);
     return 0;
 }
 
 int main() {
+    #ifdef _WIN32
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD dwMode = 0;
+        GetConsoleMode(hOut, &dwMode);
+        dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        SetConsoleMode(hOut, dwMode);
+    #endif
     double a = ask_for_data("a (quadratic term)");
     double b = ask_for_data("b (linear term)");
     double c = ask_for_data("c (constant)");
