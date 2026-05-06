@@ -104,6 +104,14 @@ int draw_graph(double slope, double y_intercept, char *screen_buffer) {
   for (int i = 0; i < WIDTH; i++) {
     draw_symbol(i, x_axis_location, screen_buffer, '-');
   }
+  int y_axis_x_location = 0; 
+  for (int j = 0; j < HEIGHT; j++) {
+      if (j == x_axis_location) {
+          draw_symbol(y_axis_x_location, j, screen_buffer, '+');
+      } else {
+          draw_symbol(y_axis_x_location, j, screen_buffer, '|');
+      }
+  }
   for (int i = 0; i < WIDTH; i++) {
     double y = slope * i + y_intercept;
     int normal_y;
