@@ -30,45 +30,57 @@ int make_screen_array(char *screen_buffer) {
   return 0;
 }
 
-int draw_symbol(int ball_x, int ball_y, char *screen_buffer, char symbol) {
-    if (ball_x < 0 || ball_x >= WIDTH || ball_y < 0 || ball_y >= HEIGHT) {
-        return 1;
+int draw_symbol(int x, int y, char *buffer, char symbol) {
+  if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return 1;
+
+  int flipped_y = (HEIGHT - 1) - y;
+  int location = flipped_y * (WIDTH + 1) + x;
+  buffer[location] = symbol;
+  return 0; 
+}
+
+void render_screen(char *buffer) {
+  printf("\x1b[H");
+  int len = (WIDTH + 1) * HEIGHT; 
+  for (int i = 0; i < len; i++) {
+    char c = buffer[i];
+    if (c == 'o') {
+      printf("\x1b[32m%c\x1b[0m", c);
+    } else if (c == '-' || c == '|' || c == '+') {
+      printf("\x1b[31m%c\x1b[0m", c);
+    } else {
+      printf("%c", c);
     }
-    ball_y = (HEIGHT - 1) - ball_y;
-    int location = ball_y * (WIDTH + 1) + ball_x;
-    screen_buffer[location] = symbol;
-    printf("\x1b[H");
-    printf("%s", screen_buffer);
-    fflush(stdout);
-    return 0;
+  }
+  fflush(stdout);
 }
 
 double ask_for_data(char *question) {
-    char input_buffer[64];
-    double output;
-    char *end_ptr;
-    while (1) {
-        printf("Enter %s: ", question);
-        if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) {
-            printf("\nInput error. Exiting.\n");
-            exit(1);
-        }
-        input_buffer[strcspn(input_buffer, "\n")] = 0;
-        if (strlen(input_buffer) == 0) {
-            printf("Error: Input cannot be empty!\n");
-            continue;
-        }
-        output = strtod(input_buffer, &end_ptr);
-        if (end_ptr == input_buffer) {
-            printf("Error: '%s' is not a valid number!\n", input_buffer);
-            continue;
-        }
-        if (*end_ptr != '\0') {
-            printf("Error: Please enter only numbers (found '%s' at end).\n", end_ptr);
-            continue;
-        }
-        return output;
+  char input_buffer[64];
+  double output;
+  char *end_ptr;
+  while (1) {
+    printf("Enter %s: ", question);
+    if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) {
+      printf("\nInput error. Exiting.\n");
+      exit(1);
     }
+    input_buffer[strcspn(input_buffer, "\n")] = 0;
+    if (strlen(input_buffer) == 0) {
+      printf("Error: Input cannot be empty!\n");
+      continue;
+    }
+    output = strtod(input_buffer, &end_ptr);
+    if (end_ptr == input_buffer) {
+      printf("Error: '%s' is not a valid number!\n", input_buffer);
+      continue;
+    }
+    if (*end_ptr != '\0') {
+      printf("Error: Please enter only numbers (found '%s' at end).\n", end_ptr);
+      continue;
+    }
+    return output;
+  }
 }
 
 int *calc_y_bounds(double slope, double y_intercept) {
@@ -95,8 +107,6 @@ int draw_max_min_scale(int *bounds, char *screen_buffer) {
   size_t min_len = strlen(min_string);
   if (min_len > WIDTH) min_len = WIDTH;
   memcpy(&screen_buffer[location], min_string, min_len);
-  printf("\x1b[H");
-  printf("%s", screen_buffer);
   fflush(stdout);
   return 0;
 }
@@ -117,11 +127,11 @@ int draw_graph(double slope, double y_intercept, char *screen_buffer) {
   }
   int y_axis_x_location = 0; 
   for (int j = 0; j < HEIGHT; j++) {
-      if (j == x_axis_location) {
-          draw_symbol(y_axis_x_location, j, screen_buffer, '+');
-      } else {
-          draw_symbol(y_axis_x_location, j, screen_buffer, '|');
-      }
+    if (j == x_axis_location) {
+      draw_symbol(y_axis_x_location, j, screen_buffer, '+');
+    } else {
+      draw_symbol(y_axis_x_location, j, screen_buffer, '|');
+    }
   }
   for (int i = 0; i < WIDTH; i++) {
     double y = slope * i + y_intercept;
@@ -134,11 +144,19 @@ int draw_graph(double slope, double y_intercept, char *screen_buffer) {
     draw_symbol(i, normal_y, screen_buffer, 'o');
   }
   draw_max_min_scale(bounds, screen_buffer);
+  render_screen(screen_buffer);
   free(bounds); 
   return 0;
 }
 
 int main() {
+  #ifdef _WIN32
+  HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+  DWORD dwMode = 0;
+  GetConsoleMode(hOut, &dwMode);
+  dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+  SetConsoleMode(hOut, dwMode);
+  #endif
   double slope = ask_for_data("slope");
   double y_intercept = ask_for_data("y_intercept");
   printf("\x1b[8;%d;%dt", HEIGHT + 1, WIDTH + 2);
