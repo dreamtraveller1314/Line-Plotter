@@ -30,16 +30,12 @@ int make_screen_array(char *screen_buffer) {
     return 0;
 }
 
-int draw_symbol(int ball_x, int ball_y, char *screen_buffer, char symbol) {
-    if (ball_x < 0 || ball_x >= WIDTH || ball_y < 0 || ball_y >= HEIGHT) {
-        return 1;
-    }
-    ball_y = (HEIGHT - 1) - ball_y;
-    int location = ball_y * (WIDTH + 1) + ball_x;
-    screen_buffer[location] = symbol;
-    printf("\x1b[H");
-    printf("%s", screen_buffer);
-    fflush(stdout);
+int draw_symbol(int x, int y, char *buffer, char symbol) {
+    if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return 1;
+
+    int flipped_y = (HEIGHT - 1) - y;
+    int location = flipped_y * (WIDTH + 1) + x;
+    buffer[location] = symbol;
     return 0;
 }
 
@@ -105,6 +101,14 @@ int draw_graph(double a, double b, double c, char *screen_buffer) {
     if (x_axis_location > HEIGHT - 1) x_axis_location = HEIGHT - 1;
     for (int i = 0; i < WIDTH; i++) {
         draw_symbol(i, x_axis_location, screen_buffer, '-');
+    }
+    int y_axis_x_location = 50;
+    for (int j = 0; j < HEIGHT; j++) {        
+        if (j == x_axis_location) {
+            draw_symbol(y_axis_x_location, j, screen_buffer, '+');
+        } else {
+            draw_symbol(y_axis_x_location, j, screen_buffer, '|');
+        }
     }
     for (int i = 0; i < WIDTH; i++) {
         int math_x = i - 50;
