@@ -44,20 +44,31 @@ int draw_symbol(int ball_x, int ball_y, char *screen_buffer, char symbol) {
 }
 
 double ask_for_data(char *question) {
-  while (1) {
-    char input_buffer[10];
-    printf("Enter %s: ", question);
-    if (fgets(input_buffer, 10, stdin) == NULL) continue;
-    char *temp_pointer = strchr(input_buffer, '\n'); 
-    if (temp_pointer) *temp_pointer = '\0';
+    char input_buffer[64];
+    double output;
     char *end_ptr;
-    double output = strtod(input_buffer, &end_ptr); 
-    if (*end_ptr == '\0' && strlen(input_buffer) > 0) { 
-      return output;
-    } else {
-      printf("Please enter a valid number!\n");
+    while (1) {
+        printf("Enter %s: ", question);
+        if (fgets(input_buffer, sizeof(input_buffer), stdin) == NULL) {
+            printf("\nInput error. Exiting.\n");
+            exit(1);
+        }
+        input_buffer[strcspn(input_buffer, "\n")] = 0;
+        if (strlen(input_buffer) == 0) {
+            printf("Error: Input cannot be empty!\n");
+            continue;
+        }
+        output = strtod(input_buffer, &end_ptr);
+        if (end_ptr == input_buffer) {
+            printf("Error: '%s' is not a valid number!\n", input_buffer);
+            continue;
+        }
+        if (*end_ptr != '\0') {
+            printf("Error: Please enter only numbers (found '%s' at end).\n", end_ptr);
+            continue;
+        }
+        return output;
     }
-  }
 }
 
 int *calc_y_bounds(double slope, double y_intercept) {
@@ -134,6 +145,10 @@ int main() {
   printf("\x1b[?25l");
   CLEAR_SCREEN();
   char *screen_buffer = (char*)malloc((WIDTH + 1) * HEIGHT + 1);
+  if (screen_buffer == NULL) {
+      fprintf(stderr, "Fatal Error: Could not allocate memory for screen buffer!\n");
+      return 1;
+  }
   make_screen_array(screen_buffer);
   draw_graph(slope, y_intercept, screen_buffer);
   SLEEP(5);
