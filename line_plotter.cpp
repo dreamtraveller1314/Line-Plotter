@@ -31,15 +31,16 @@ int make_screen_array(char *screen_buffer) {
 }
 
 int draw_symbol(int ball_x, int ball_y, char *screen_buffer, char symbol) {
-  if (ball_x < 0 || ball_x >= WIDTH || ball_y < 0 || ball_y >= HEIGHT) {
-    return 1;
-  }
-  int location = ball_y * (WIDTH + 1) + ball_x;
-  screen_buffer[location] = symbol;
-  printf("\x1b[H");
-  printf("%s", screen_buffer);
-  fflush(stdout);
-  return 0;
+    if (ball_x < 0 || ball_x >= WIDTH || ball_y < 0 || ball_y >= HEIGHT) {
+        return 1;
+    }
+    ball_y = (HEIGHT - 1) - ball_y;
+    int location = ball_y * (WIDTH + 1) + ball_x;
+    screen_buffer[location] = symbol;
+    printf("\x1b[H");
+    printf("%s", screen_buffer);
+    fflush(stdout);
+    return 0;
 }
 
 double ask_for_data(char *question) {
