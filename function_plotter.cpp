@@ -115,15 +115,20 @@ int draw_max_min_scale(int *bounds, char *screen_buffer) {
 
 int draw_graph(double a, double b, double c, char *screen_buffer) {
     int *bounds = calc_y_bounds(a, b, c);
+    int min_y = bounds[0];
+    int max_y = bounds[1];
+
     int x_axis_location;
-    if (bounds[0] == bounds[1]) {
-        x_axis_location = (HEIGHT / 2); 
+    if (min_y == max_y) {
+        x_axis_location = HEIGHT / 2; 
+    } else if (min_y > 0) {
+        x_axis_location = 0;
+    } else if (max_y < 0) {
+        x_axis_location = HEIGHT - 1;
     } else {
-        double x_axis_ratio = (0.0 - bounds[0]) / (double)(bounds[1] - bounds[0]);
+        double x_axis_ratio = (0.0 - min_y) / (double)(max_y - min_y);
         x_axis_location = (int)((HEIGHT - 1) * x_axis_ratio);
     }
-    if (x_axis_location < 0) x_axis_location = 0;
-    if (x_axis_location > HEIGHT - 1) x_axis_location = HEIGHT - 1;
     for (int i = 0; i < WIDTH; i++) {
         draw_symbol(i, x_axis_location, screen_buffer, '-');
     }

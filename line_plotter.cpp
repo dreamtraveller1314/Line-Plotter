@@ -18,16 +18,15 @@
 #endif
 
 int make_screen_array(char *screen_buffer) {
-  screen_buffer[0] = '\0'; 
-  for (int y = 0; y < HEIGHT; y++) {
-    for (int x = 0; x < WIDTH; x++) {
-      strcat(screen_buffer, " "); 
-    }                             
-    if (y < HEIGHT - 1) {         
-      strcat(screen_buffer, "\n");
+    int idx = 0;
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            screen_buffer[idx++] = ' ';
+        }
+        screen_buffer[idx++] = '\n';
     }
-  }
-  return 0;
+    screen_buffer[idx] = '\0'; 
+    return 0;
 }
 
 int draw_symbol(int x, int y, char *buffer, char symbol) {
@@ -88,9 +87,10 @@ int *calc_y_bounds(double slope, double y_intercept) {
   arr[0] = INT_MAX;
   arr[1] = INT_MIN;
   for (int i = 0; i < WIDTH; i++) {
-    int y = (int)(slope * i + y_intercept);
-    if (y > arr[1]) arr[1] = y;
-    if (y < arr[0]) arr[0] = y;
+      int math_x = i - 50;
+      int y = (int)(slope * math_x + y_intercept);
+      if (y > arr[1]) arr[1] = y;
+      if (y < arr[0]) arr[0] = y;
   }
   return arr;
 }
@@ -112,36 +112,47 @@ int draw_max_min_scale(int *bounds, char *screen_buffer) {
 }
 
 int draw_graph(double slope, double y_intercept, char *screen_buffer) {
-  int *bounds = calc_y_bounds(slope, y_intercept);
-  int x_axis_location;
-  if (bounds[0] == bounds[1]) {
-    x_axis_location = (HEIGHT / 2); 
-  } else {
-    double x_axis_ratio = (0.0 - bounds[0]) / (double)(bounds[1] - bounds[0]);
-    x_axis_location = (int)((HEIGHT - 1) * x_axis_ratio);
-  }
-  if (x_axis_location < 0) x_axis_location = 0;
-  if (x_axis_location > HEIGHT - 1) x_axis_location = HEIGHT - 1;
+    int *bounds = calc_y_bounds(slope, y_intercept); 
+    int min_y = bounds[0];
+    int max_y = bounds[1];
+
+    int x_axis_location;
+    if (min_y == max_y) {
+        if (min_y == 0) x_axis_location = HEIGHT / 2;
+        else if (min_y > 0) x_axis_location = 0;
+        else x_axis_location = HEIGHT - 1;
+    } else if (min_y > 0) {
+        x_axis_location = 0;
+    } else if (max_y < 0) {
+        x_axis_location = HEIGHT - 1;
+    } else {
+        double x_axis_ratio = (0.0 - min_y) / (double)(max_y - min_y);
+        x_axis_location = (int)((HEIGHT - 1) * x_axis_ratio);
+    }
   for (int i = 0; i < WIDTH; i++) {
     draw_symbol(i, x_axis_location, screen_buffer, '-');
   }
-  int y_axis_x_location = 0; 
+  int y_axis_x_location = 50;
   for (int j = 0; j < HEIGHT; j++) {
-    if (j == x_axis_location) {
-      draw_symbol(y_axis_x_location, j, screen_buffer, '+');
-    } else {
-      draw_symbol(y_axis_x_location, j, screen_buffer, '|');
-    }
+      if (j == x_axis_location) {
+          draw_symbol(y_axis_x_location, j, screen_buffer, '+');
+      } else {
+          draw_symbol(y_axis_x_location, j, screen_buffer, '|');
+      }
   }
   for (int i = 0; i < WIDTH; i++) {
-    double y = slope * i + y_intercept;
-    int normal_y;
-    if (bounds[0] == bounds[1]) {
-      normal_y = HEIGHT / 2;
-    } else {
-      normal_y = (int)((HEIGHT - 1) * ((y - bounds[0]) / (bounds[1] - bounds[0])));
-    }
-    draw_symbol(i, normal_y, screen_buffer, 'o');
+      int math_x = i - 50;
+      double y = slope * math_x + y_intercept;
+      int normal_y;
+      if (bounds[0] == bounds[1]) {
+          normal_y = HEIGHT / 2;
+      } else {
+          normal_y = (int)((HEIGHT - 1) * ((y - bounds[0]) / (bounds[1] - bounds[0])));
+      }
+      
+      if (!(i == y_axis_x_location && normal_y == x_axis_location)) {
+          draw_symbol(i, normal_y, screen_buffer, 'o');
+      }
   }
   draw_max_min_scale(bounds, screen_buffer);
   render_screen(screen_buffer);
